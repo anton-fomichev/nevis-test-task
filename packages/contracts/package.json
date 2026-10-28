@@ -1,0 +1,22 @@
+{
+  "name": "@nevis/contracts",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Zod schemas and TypeScript types for the clients API — the boundary between apps/api and apps/web",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}
