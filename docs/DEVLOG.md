@@ -170,3 +170,46 @@ every (node, month) where the figure ≠ sum of children. 26 unit tests.
   of inconsistent data (DECISIONS #18) and the test says so in words.
 
 **Verified by:** `npm test -w apps/web` (7 files, 26 passed), `npm run typecheck`, `npm run lint`.
+
+## Step 6 — TreeTable (02:05 elapsed)
+
+**Did:** `shared/ui`: `Card`, `VisuallyHidden`, `ChevronIcon` (one path, rotated for "down"),
+`Avatar` (initials + hue from the node id). `shared/lib`: `cn`, `formatMonth`.
+`features/clients/ui/TreeTable/`: `TreeTable` (owns expanded state via `useReducer`, renders a
+`<table role="treegrid">` with a hidden "Name" column header and formatted month headers),
+`TreeRow` (ARIA level/posinset/setsize, `aria-expanded` only with children, chevron or a 24px
+spacer so leaf branches align, avatar for advisers, 0/28/56/108px indents by kind), and
+`useTreeGridKeyboard` (roving tabIndex + the full APG key map, focus follows the active row after
+re-render). 17 RTL tests with `user-event` covering mouse, every key, ARIA attributes, leaves, DOM
+removal of collapsed children and the keep-state-on-collapse rule. Temporarily wired the table into
+`App` with the test fixture so it can be looked at in a browser — replaced in step 8.
+
+**Questions that came up:**
+
+- `jsx-a11y/no-noninteractive-element-to-interactive-role` fired on `<table role="treegrid">`, on
+  `<th role="columnheader">` and `<th role="rowheader">`. Suppress or restructure?
+- jsdom/RTL does not apply HTML-AAM's context mapping (`td` inside a treegrid → `gridcell`), so a
+  test querying `gridcell` found nothing without an explicit role.
+- My first "falls back to the first row" test was wrong: clicking a parent makes _it_ the active
+  row before its children disappear, so the fallback path is unreachable by mouse. Rewrote the
+  test to assert the real invariant (exactly one tab stop, on the clicked parent); kept the
+  fallback in the hook as a cheap guard.
+- A screenshot taken right after a burst of synthetic key presses showed the focus ring one row
+  behind the DOM's `activeElement` — paint lag in the automation, not a bug; the DOM state and the
+  RTL tests agree.
+- At the pane's ~1024px the 64px minimum month column made headers collide.
+
+**Decided:**
+
+- Keep the pattern and disable that one rule for the `<table>` element only (with a comment: a
+  table whose rows expand _is_ the treegrid pattern). Drop the redundant explicit
+  `columnheader`/`rowheader` roles — native `th scope=col|row` already map to them. Keep an
+  explicit `role="gridcell"` on `td` as the APG example does, so every tool sees the same role.
+  Decision #38.
+- Minimum month column 80px (→ table min-width 1224px at 12 months; the card scrolls below that).
+  At 1440 the columns are 92px as in the design.
+
+**Verified by:** `npm test -w apps/web` (48 passed), lint + typecheck green; in the browser at 1440:
+row/header height 56, name column 264, 16/24px paddings, tabular numbers, 1px `--outline` borders,
+`position: sticky` on the name cell; Tab → ↓ → → → → → → walks Company → Branch 1 (expands) →
+Anna (expands) → Existing clients with a 2px focus ring on the active row.

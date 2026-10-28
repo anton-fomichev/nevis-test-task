@@ -1,0 +1,114 @@
+.scroller {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  --month-column-min: 80px;
+  width: 100%;
+  min-width: calc(var(--name-column-width) + var(--month-count, 12) * var(--month-column-min));
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+}
+
+.nameCol {
+  width: var(--name-column-width);
+}
+
+.cell {
+  height: var(--row-height);
+  padding: 0 0 0 var(--space-4);
+  vertical-align: middle;
+  text-align: left;
+  font-weight: 400;
+  background-color: var(--bg-card);
+  white-space: nowrap;
+}
+
+.cell:last-child {
+  padding-right: var(--space-6);
+}
+
+.headerRow > .cell {
+  color: var(--content-secondary);
+  border-bottom: 1px solid var(--outline);
+}
+
+.monthHeader {
+  text-align: right;
+}
+
+.value {
+  text-align: right;
+}
+
+.nameCell {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row > .cell {
+  color: var(--content-primary);
+}
+
+.row:not(:last-child) > .cell {
+  border-bottom: 1px solid var(--outline);
+}
+
+.expandable {
+  cursor: pointer;
+}
+
+/* Hover paints a translucent tint on top of the opaque cell background, so the sticky name cell
+   stays opaque while scrolling (DECISIONS #25: leaves get no hover). */
+.expandable:hover > .cell {
+  background-image: linear-gradient(var(--surface-hover), var(--surface-hover));
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
+}
+
+.name[data-kind='branch'] {
+  padding-left: 28px;
+}
+
+.name[data-kind='adviser'] {
+  padding-left: 56px;
+}
+
+.name[data-kind='channel'] {
+  padding-left: 108px;
+}
+
+.chevron,
+.chevronSpacer {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--content-primary);
+}
+
+.nameText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 768px) {
+  .table {
+    --name-column-width: var(--name-column-width-narrow);
+  }
+}
