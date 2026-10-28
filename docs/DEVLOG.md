@@ -69,3 +69,35 @@ step can serve it unchanged.
 **Verified by:** `npm test -w packages/contracts` (7 passed), `npm run build -w packages/contracts`
 
 - `node -e 'import("@nevis/contracts")'` lists the exports, `npm run lint`, `npm run typecheck`.
+
+## Step 3 — API (00:50 elapsed)
+
+**Did:** `apps/api`: `buildApp({ env, logger })` factory (Fastify 5), `GET /api/health`,
+`GET /api/clients` returning `{ months, company }`, `MONTHS` constant (`2024-02` … `2025-01`),
+`loadClientsReport()` which parses the JSON + months through `clientsReportSchema` at startup and
+throws a readable list of issues if any node's values do not line up with the months. Dev-only
+`?delay=<ms>` (clamped to 30 s, non-numeric/negative ignored) and `?fail=1` (500 with a Fastify-style
+error body), both ignored when `env === "production"`. `server.ts` listens on `127.0.0.1:3001`
+(`PORT`/`HOST` overridable). Nine `app.inject()` tests including one that asserts
+`apps/api/src/data/clients.json` is byte-for-byte the JSON block in `docs/BRIEF.md`.
+
+**Questions that came up:**
+
+- `tsc --noEmit` failed with TS6059 because `rootDir: "src"` plus the `paths` alias pulled
+  `packages/contracts/src` into the API program.
+- Should the API set CORS headers?
+- Listen on `localhost` or `127.0.0.1`? Node ≥17 may resolve `localhost` to `::1`, and a proxy
+  targeting `localhost` can then miss a server bound to IPv4.
+
+**Decided:**
+
+- `rootDir` moves to `tsconfig.build.json` only (where `paths` is reset to `{}`), the typecheck
+  config has no `rootDir` — because typecheck wants to see the contracts source, the build must not.
+- No CORS: the web talks to the API through Vite's dev proxy (and would sit behind the same origin
+  in production). Decision #33.
+- Bind to `127.0.0.1` and point the Vite proxy at `http://127.0.0.1:3001` explicitly, so the two
+  never disagree about IPv4/IPv6. Decision #34.
+
+**Verified by:** `npm test -w apps/api` (9 passed); `npm run build -w apps/api && node apps/api/dist/server.js`
+then `curl localhost:3001/api/clients | head -c 300`, `curl …/api/health`, `?fail=1` → 500,
+`?delay=700` → 0.70 s; `npx tsx src/server.ts` also serves `/api/health`; lint + typecheck green.
