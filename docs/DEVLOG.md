@@ -37,3 +37,35 @@ decisions from the design review, and this log. Set a repo-local git identity (n
 
 **Verified by:** `rm -rf node_modules && npm install && npm run lint && npm run typecheck` — all green;
 `npm ci` also green; `npm audit` reports 0 vulnerabilities.
+
+## Step 2 — Contracts (00:35 elapsed)
+
+**Did:** `packages/contracts`: zod schemas for the four node levels (`channel` → `employee` →
+`branch` → `company`, each extending a shared base of `id`/`name`/`values`), `isoMonthSchema`,
+`clientsReportSchema` (`{ months, company }` with a refinement that every node has one value per
+month), inferred types, and a `walkCompany()` generator the API and tests reuse. Seven tests, 100%
+line coverage. Also extracted the brief's JSON block byte-for-byte into
+`apps/api/src/data/clients.json` with a small node script (slice between the fences), so the API
+step can serve it unchanged.
+
+**Questions that came up:**
+
+- Where should the payload fixture live so the contracts test can parse it without the contracts
+  package depending on the API?
+- One recursive schema or one per level? The prompt says "recursive", but the three child keys
+  differ (`branches`/`employees`/`channels`).
+
+**Decided:**
+
+- The payload lives in the API (it is what the API serves); the contracts test reads it through a
+  relative file path — test-only, one-directional, commented — because duplicating 2 KB of JSON in a
+  second place is how the two copies drift apart.
+- One schema per level, extending a shared base — because the TS types then say exactly which key a
+  level has, and a company cannot accidentally carry `channels`. Decision #31.
+- `exports` of the package point at `dist/`; the two apps alias `@nevis/contracts` to `src/` in
+  their tsconfig `paths` (and the Vite alias in step 4), so dev/typecheck/tests always see source
+  and only the production build consumes `dist/`. Decision #32.
+
+**Verified by:** `npm test -w packages/contracts` (7 passed), `npm run build -w packages/contracts`
+
+- `node -e 'import("@nevis/contracts")'` lists the exports, `npm run lint`, `npm run typecheck`.
