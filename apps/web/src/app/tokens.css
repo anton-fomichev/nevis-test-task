@@ -1,0 +1,38 @@
+/* Design tokens extracted from the Figma file (docs/PROMPT.md §2). Dark mode would redefine
+   these under a [data-theme="dark"] selector; nothing else in the app knows a hex value. */
+:root {
+  --bg-page: #f7f5ed;
+  --bg-card: #ffffff;
+  --content-primary: #141413;
+  --content-secondary: rgba(20, 20, 19, 0.6);
+  --outline: rgba(20, 20, 19, 0.08);
+  --surface-hover: rgba(20, 20, 19, 0.04);
+  --focus-ring: #141413;
+
+  --series-1: #b29df8;
+  --series-2: #f4beb4;
+  --series-3: #a75e6e;
+
+  --radius-card: 8px;
+  --radius-bar: 4px;
+  --radius-swatch: 2px;
+
+  --font-family: 'Inter Variable', Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-size-body: 14px;
+  --line-height-body: 20px;
+  --font-size-footnote: 12px;
+  --line-height-footnote: 16px;
+  --font-size-title: 35px;
+  --line-height-title: 1.25;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+
+  --row-height: 56px;
+  --name-column-width: 264px;
+  --name-column-width-narrow: 180px;
+  --content-max-width: 1408px;
+}

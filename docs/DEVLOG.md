@@ -78,7 +78,7 @@ step can serve it unchanged.
 throws a readable list of issues if any node's values do not line up with the months. Dev-only
 `?delay=<ms>` (clamped to 30 s, non-numeric/negative ignored) and `?fail=1` (500 with a Fastify-style
 error body), both ignored when `env === "production"`. `server.ts` listens on `127.0.0.1:3001`
-(`PORT`/`HOST` overridable). Nine `app.inject()` tests including one that asserts
+(`API_PORT`/`API_HOST` overridable). Nine `app.inject()` tests including one that asserts
 `apps/api/src/data/clients.json` is byte-for-byte the JSON block in `docs/BRIEF.md`.
 
 **Questions that came up:**
@@ -101,3 +101,35 @@ error body), both ignored when `env === "production"`. `server.ts` listens on `1
 **Verified by:** `npm test -w apps/api` (9 passed); `npm run build -w apps/api && node apps/api/dist/server.js`
 then `curl localhost:3001/api/clients | head -c 300`, `curl …/api/health`, `?fail=1` → 500,
 `?delay=700` → 0.70 s; `npx tsx src/server.ts` also serves `/api/health`; lint + typecheck green.
+
+## Step 4 — Web scaffold (01:05 elapsed)
+
+**Did:** `apps/web`: Vite config (React plugin, `@nevis/contracts` → source alias, `/api` proxy to
+`127.0.0.1:3001`, Vitest with jsdom + jest-dom setup, non-scoped CSS-module class names in tests),
+`index.html`, `main.tsx` (Inter via `@fontsource-variable/inter`, tokens + global CSS),
+`app/tokens.css` (every value from the design spec as a custom property), `app/global.css`
+(reset, body colours, `:focus-visible` ring, `.tnum` helper), `QueryProvider`, `App` rendering the
+"Clients" h1 inside the 1408px content column. One RTL smoke test.
+
+**Questions that came up:**
+
+- First `npm test -w apps/web` failed: `@testing-library/react` 16 has `@testing-library/dom` as a
+  _peer_ dependency and `--legacy-peer-deps` (step 1) does not auto-install peers.
+- First `npm run dev` served a blank page: Vite logged `Missing field moduleType` from
+  `builtin:vite-react-refresh-wrapper` via `node_modules/rolldown`. Root cause: Vitest 4.1 at the
+  root had pulled Vite **8** (hoisted), `apps/web` had Vite **7**, and `@vitejs/plugin-react` bound to
+  the root copy — two Vite majors in one tree.
+- The API started on port 5173: the preview tooling exports `PORT`, which my server honoured.
+
+**Decided:**
+
+- Add `@testing-library/dom` explicitly (it is what RTL asks for) — and treat "install peers by
+  hand" as the price of decision #29.
+- Pin `vite@^7` at the root as well, so one copy is hoisted and every consumer (app, plugin-react,
+  vitest) dedupes to it. `npm ls vite` now shows a single 7.3.7. Decision #35.
+- The API reads `API_PORT`/`API_HOST` instead of the generic `PORT`/`HOST`, so a host environment
+  that sets `PORT` for the web server cannot hijack the API. Decision #36.
+
+**Verified by:** `npm test -w apps/web` (1 passed), lint + typecheck green, `npm run dev` then in
+the browser: body background `rgb(247, 245, 237)`, h1 font-family `"Inter Variable"` at 35px,
+`fetch('/api/health')` through the proxy → `{ status: "ok" }`.
