@@ -133,3 +133,40 @@ then `curl localhost:3001/api/clients | head -c 300`, `curl …/api/health`, `?f
 **Verified by:** `npm test -w apps/web` (1 passed), lint + typecheck green, `npm run dev` then in
 the browser: body background `rgb(247, 245, 237)`, h1 font-family `"Inter Variable"` at 35px,
 `fetch('/api/health')` through the proxy → `{ status: "ok" }`.
+
+## Step 5 — Model (01:25 elapsed)
+
+**Did:** `features/clients/model/`: `TreeNode` + `normaliseCompany()` (three child keys → one
+`children`, a `kind` per level), `flattenTree(root, expanded)` → `VisibleRow[]` with
+`level/posInSet/setSize/hasChildren/expanded/parentId`, `expandedReducer` + `initialExpanded`
+(Set-based, never mutates, returns the same reference when nothing changes),
+`toChartSeries(node)` (children of the node; a leaf becomes one series of itself),
+`buildStackedLayout(series, months, { height, tickCount, niceStep })` (pure vertical geometry,
+ticks, scale; guards against zero data and bad options), and `findMismatches(root)` which lists
+every (node, month) where the figure ≠ sum of children. 26 unit tests.
+
+**Questions that came up:**
+
+- Should the layout also compute x positions? The design makes columns `flex: 1` with fixed
+  24px gaps, so horizontal geometry depends on the rendered width.
+- Where do the web tests get the payload? Same question as in step 2.
+- The Q3 mismatch test: hard-code the numbers from the prompt, or derive them?
+
+**Decided:**
+
+- The layout is vertical-only (`y`, `height`, ticks, scale); the renderer lays columns out with
+  flexbox and draws each column in its own small SVG. No `ResizeObserver`, nothing to measure in
+  jsdom, and the function stays a pure data → px mapping. Decision #37.
+- A single `src/test/fixtures.ts` imports the API's `clients.json` by relative path (test-only,
+  one-directional), for the same reason as in step 2: the mismatch test asserts facts about
+  _that_ file.
+- `findMismatches` is real (exported) code, and the test asserts its full output against the list
+  from the design review — the function reproduced every number in the prompt (Company May 2024
+  301 vs 279, Branch 1 Aug 2024 214 vs 216, Anna Blackwood May–Sep ±1–2) and confirmed that the
+  22-unit company gap equals the gap Maria Gutierrez's suspected typo (22 → 44) would close.
+  Nothing in the UI uses it yet; it is the hook for a "figures don't add up" hint later.
+- The chart's column totals are the _sums of the branches_, not the company's own values, so the
+  May 2024 column shows 279 while the table's Company row says 301. That is the honest rendering
+  of inconsistent data (DECISIONS #18) and the test says so in words.
+
+**Verified by:** `npm test -w apps/web` (7 files, 26 passed), `npm run typecheck`, `npm run lint`.
