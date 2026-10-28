@@ -213,3 +213,39 @@ removal of collapsed children and the keep-state-on-collapse rule. Temporarily w
 row/header height 56, name column 264, 16/24px paddings, tabular numbers, 1px `--outline` borders,
 `position: sticky` on the name cell; Tab → ↓ → → → → → → walks Company → Branch 1 (expands) →
 Anna (expands) → Existing clients with a 2px focus ring on the active row.
+
+## Step 7 — StackedBarChart + Legend (02:35 elapsed)
+
+**Did:** `StackedBarChart` (props: `series`, `months`, `label`, `height`, `colors`,
+`formatMonth`): a CSS-grid of y-axis (26px, sticky), plot (320px, flex columns with 24px gaps and
+12px end padding, one background SVG for the five dashed grid lines, one small SVG per column
+inside a 4px-rounded clipped box), x labels 12px below, `Legend` 16px below that, and a
+visually-hidden `<table>` with the same numbers. `seriesColor()` returns the three tokens then a
+golden-angle hue walk. `Legend` is a labelled `<ul>`. Nine RTL tests: 12 × 3 segments, exact px
+heights from a fixed layout (80/160/40 on a 280px stack), fills, ticks/labels, `role="img"` name,
+hidden table contents, legend items, palette extension. Chart added to the temporary preview.
+
+**Questions that came up:**
+
+- Should the legend live inside the `role="img"` element? Inside, AT never hears the series names
+  except through the hidden table.
+- The top tick label ("400") was clipped: it is centred on the plot's top edge and the card's
+  scroller clips vertically as a side effect of `overflow-x: auto`.
+- After adding an 8px scroller padding with a matching negative margin, the plot sat 32px below
+  the card top, not 24px — an inline `margin: 0` on the `<figure>` was overriding the negative
+  margin.
+
+**Decided:**
+
+- Legend outside the image, as a real list — because it is text, and a screen-reader user should
+  hear the series names where sighted users read them. Decision #39.
+- 8px top padding + negative margin on the scroller (in the stylesheet, no inline styles) so the
+  label has room and nothing moves.
+- `role="img"` wraps the y axis, plot and x labels with `display: contents` so the grid layout is
+  untouched by the extra element.
+
+**Verified by:** `npm test -w apps/web` (57 passed), lint + typecheck green; in the browser at
+1440: plot height 320, column gap 24, end padding 12, y-axis 26 wide with a 12px gap, Aug 2024
+stack 280px (= 350/400 × 320), `border-radius: 4px`, first segment `rgb(178, 157, 248)`
+(`--series-1`), grid stroke `rgba(20, 20, 19, 0.08)`, x labels 12px below the plot, legend 16px
+below the labels; "400" fully visible after the fix.
