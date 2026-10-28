@@ -1,9 +1,9 @@
 # DEVLOG
 
 Chronological log of the build. One entry per step of `docs/PROMPT.md`, plus anything that went
-wrong along the way. Elapsed time counts from the first command (18:48 local).
+wrong along the way. Elapsed time is wall-clock from the first command (18:48 local), taken from the commit timestamps.
 
-## Step 1 — Scaffold (00:20 elapsed)
+## Step 1 — Scaffold (00:11 elapsed)
 
 **Did:** Root `package.json` with npm workspaces (`packages/*`, `apps/*`), root scripts (`dev`, `build`,
 `test`, `lint`, `typecheck`, `format`), `.nvmrc` (22), `.editorconfig`, `.gitignore`, Prettier,
@@ -38,7 +38,7 @@ decisions from the design review, and this log. Set a repo-local git identity (n
 **Verified by:** `rm -rf node_modules && npm install && npm run lint && npm run typecheck` — all green;
 `npm ci` also green; `npm audit` reports 0 vulnerabilities.
 
-## Step 2 — Contracts (00:35 elapsed)
+## Step 2 — Contracts (00:14 elapsed)
 
 **Did:** `packages/contracts`: zod schemas for the four node levels (`channel` → `employee` →
 `branch` → `company`, each extending a shared base of `id`/`name`/`values`), `isoMonthSchema`,
@@ -70,7 +70,7 @@ step can serve it unchanged.
 
 - `node -e 'import("@nevis/contracts")'` lists the exports, `npm run lint`, `npm run typecheck`.
 
-## Step 3 — API (00:50 elapsed)
+## Step 3 — API (00:17 elapsed)
 
 **Did:** `apps/api`: `buildApp({ env, logger })` factory (Fastify 5), `GET /api/health`,
 `GET /api/clients` returning `{ months, company }`, `MONTHS` constant (`2024-02` … `2025-01`),
@@ -102,7 +102,7 @@ error body), both ignored when `env === "production"`. `server.ts` listens on `1
 then `curl localhost:3001/api/clients | head -c 300`, `curl …/api/health`, `?fail=1` → 500,
 `?delay=700` → 0.70 s; `npx tsx src/server.ts` also serves `/api/health`; lint + typecheck green.
 
-## Step 4 — Web scaffold (01:05 elapsed)
+## Step 4 — Web scaffold (00:20 elapsed)
 
 **Did:** `apps/web`: Vite config (React plugin, `@nevis/contracts` → source alias, `/api` proxy to
 `127.0.0.1:3001`, Vitest with jsdom + jest-dom setup, non-scoped CSS-module class names in tests),
@@ -134,7 +134,7 @@ then `curl localhost:3001/api/clients | head -c 300`, `curl …/api/health`, `?f
 the browser: body background `rgb(247, 245, 237)`, h1 font-family `"Inter Variable"` at 35px,
 `fetch('/api/health')` through the proxy → `{ status: "ok" }`.
 
-## Step 5 — Model (01:25 elapsed)
+## Step 5 — Model (00:23 elapsed)
 
 **Did:** `features/clients/model/`: `TreeNode` + `normaliseCompany()` (three child keys → one
 `children`, a `kind` per level), `flattenTree(root, expanded)` → `VisibleRow[]` with
@@ -171,7 +171,7 @@ every (node, month) where the figure ≠ sum of children. 26 unit tests.
 
 **Verified by:** `npm test -w apps/web` (7 files, 26 passed), `npm run typecheck`, `npm run lint`.
 
-## Step 6 — TreeTable (02:05 elapsed)
+## Step 6 — TreeTable (00:30 elapsed)
 
 **Did:** `shared/ui`: `Card`, `VisuallyHidden`, `ChevronIcon` (one path, rotated for "down"),
 `Avatar` (initials + hue from the node id). `shared/lib`: `cn`, `formatMonth`.
@@ -214,7 +214,7 @@ row/header height 56, name column 264, 16/24px paddings, tabular numbers, 1px `-
 `position: sticky` on the name cell; Tab → ↓ → → → → → → walks Company → Branch 1 (expands) →
 Anna (expands) → Existing clients with a 2px focus ring on the active row.
 
-## Step 7 — StackedBarChart + Legend (02:35 elapsed)
+## Step 7 — StackedBarChart + Legend (00:35 elapsed)
 
 **Did:** `StackedBarChart` (props: `series`, `months`, `label`, `height`, `colors`,
 `formatMonth`): a CSS-grid of y-axis (26px, sticky), plot (320px, flex columns with 24px gaps and
@@ -250,7 +250,7 @@ stack 280px (= 350/400 × 320), `border-radius: 4px`, first segment `rgb(178, 15
 (`--series-1`), grid stroke `rgba(20, 20, 19, 0.08)`, x labels 12px below the plot, legend 16px
 below the labels; "400" fully visible after the fix.
 
-## Step 8 — Dashboard (03:05 elapsed)
+## Step 8 — Dashboard (00:39 elapsed)
 
 **Did:** `features/clients/api/`: `devFlagsFrom(search)` (forwards only `delay`/`fail` from the
 page URL), `fetchClientsReport()` (network / non-2xx / non-JSON / contract mismatch → one
@@ -284,7 +284,7 @@ card. `App` now renders the dashboard; the fixture-backed preview is gone. Test 
 failure requested with ?fail=1." and a Retry button; clicking Retry renders the treegrid and the
 alert disappears.
 
-## Step 9 — Responsive pass (03:35 elapsed)
+## Step 9 — Responsive pass (00:43 elapsed)
 
 **Did:** Checked 375, 768 and 1440 in the built-in browser (emulated viewports) and captured
 screenshots with headless Chrome driven by `playwright-core` from a scratch folder (not a project
@@ -315,3 +315,53 @@ scroller 311/763 (client/scroll), table scroller 343/1140, name cell 180px and `
 legend centred within the card and fully in view. 768: scrollWidth 768, chart 704/763, table
 736/1140, name 180. 1440: table 1376 wide with 92px month columns, no scrollers active.
 `npm test -w apps/web` (67 passed), lint + typecheck green.
+
+## Step 10 — Polish & handover (00:50 elapsed)
+
+**Did:** Root `npm run lint && npm run typecheck && npm test && npm run build` green; the same
+from a fresh `git clone` into a scratch folder (install from the lockfile → 0 vulnerabilities, lint,
+typecheck, 7 + 9 + 67 tests, build) — exit 0. Coverage: contracts 100%, api 88%, web 99% lines.
+Rewrote `README.md` per the prompt's section 6. Corrected the elapsed stamps on every DEVLOG entry
+to wall-clock values taken from the commit timestamps (my first stamps were guesses that overstated
+the time roughly fourfold — the kind of thing this log exists to catch).
+
+**Questions that came up:**
+
+- Keep `docs/PROMPT.md` in the repository? It is the instruction set the build followed.
+- The "Time spent" section: the brief expects 6–8 hours of a person; the build was 50 minutes of
+  an agent after about an hour of human design review.
+
+**Decided:**
+
+- Keep the prompt: it is the most honest account of how the decisions were made and what the
+  agent was told. Decision #43.
+- Say the real numbers in the README and describe the split (human review up front, agent for the
+  typing, paper trail for both), since the brief invites LLM use and the trail is the deliverable.
+
+**Definition of done (prompt §7):**
+
+- [x] `npm install && npm run lint && npm run typecheck && npm test && npm run build` pass from a
+      clean clone — verified in a scratch clone of the committed history.
+- [x] `npm run dev` serves the dashboard; `GET /api/clients` returns `{ months, company }` with the
+      payload unchanged — `app.test.ts` diffs it against the brief's JSON block.
+- [x] Expand/collapse by mouse and by ↑ ↓ → ← Enter Space Home End; every row carries
+      `aria-level/posinset/setsize` and `aria-expanded` where applicable — `TreeTable.test.tsx` and
+      a manual walk in the browser.
+- [x] Loading and error states via `?delay=2000` / `?fail=1`; Retry recovers — browser-checked and
+      tested with a mocked `fetch`.
+- [x] 375px: no page-level horizontal scroll, both cards scroll internally, name column sticky —
+      measured in the browser, screenshot in `docs/screenshots/mobile-375.png`.
+- [x] Tests cover expand/collapse (mouse + keyboard), ARIA, data → chart mapping, non-uniform
+      nesting, the three fetch states and the API shape.
+- [x] One DEVLOG entry per step; DECISIONS has rows 1–27 from the review and 28–43 from the build;
+      README follows §6 and names Q1–Q12.
+- [x] Ten commits, conventional messages, nothing pushed.
+
+**What I would cut with less time:** the screenshots and the loading/error placeholder sizing first
+(cosmetic), then the palette extension beyond three series and the `findMismatches` helper (not
+visible in the UI), then the API's `?delay` flag (the error flag alone demonstrates the state
+handling). The contracts package, the treegrid keyboard map and the layout unit tests would stay —
+they are what the brief grades.
+
+**Verified by:** the clean-clone run above; `git status` clean after the final commit; `git log`
+shows ten commits on `master`, none pushed.
