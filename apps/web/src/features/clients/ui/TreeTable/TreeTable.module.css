@@ -71,8 +71,28 @@
 }
 
 .row:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: -2px;
+  outline: none;
+}
+
+/* The focus ring is drawn on the cells, not the row: the sticky name cell paints above the row
+   box and would cover a row outline. Each cell gets the top/bottom edges; the first and last
+   cells add the left/right edges. */
+.row:focus-visible > .cell {
+  box-shadow:
+    inset 0 2px 0 0 var(--focus-ring),
+    inset 0 -2px 0 0 var(--focus-ring);
+}
+
+.row:focus-visible > .cell:first-child {
+  box-shadow:
+    inset 2px 2px 0 0 var(--focus-ring),
+    inset 0 -2px 0 0 var(--focus-ring);
+}
+
+.row:focus-visible > .cell:last-child {
+  box-shadow:
+    inset -2px 2px 0 0 var(--focus-ring),
+    inset 0 -2px 0 0 var(--focus-ring);
 }
 
 .name {

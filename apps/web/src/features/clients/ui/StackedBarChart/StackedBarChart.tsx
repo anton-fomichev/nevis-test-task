@@ -45,62 +45,65 @@ export function StackedBarChart({
   const monthLabels = months.map(formatMonth);
 
   return (
-    <figure className={styles.scroller}>
-      <div className={styles.chart}>
-        {/* The drawing. Everything inside is hidden from AT behind the single label. */}
-        <div role="img" aria-label={label} style={{ display: 'contents' }}>
-          <div className={styles.yAxis} style={{ height }}>
-            {layout.ticks.map((tick) => (
-              <span key={tick.value} className={`${styles.tick} tnum`} style={{ top: tick.y }}>
-                {tick.value}
-              </span>
-            ))}
-          </div>
-          <div className={styles.plot} style={{ height }}>
-            <svg className={styles.grid} aria-hidden="true" focusable="false">
+    <figure className={styles.figure}>
+      {/* Only the drawing scrolls on narrow screens; the legend stays centred in the card. */}
+      <div className={styles.scroller}>
+        <div className={styles.chart}>
+          {/* The drawing. Everything inside is hidden from AT behind the single label. */}
+          <div role="img" aria-label={label} style={{ display: 'contents' }}>
+            <div className={styles.yAxis} style={{ height }}>
               {layout.ticks.map((tick) => (
-                <line
-                  key={tick.value}
-                  className={styles.gridLine}
-                  x1="0"
-                  x2="100%"
-                  y1={tick.y}
-                  y2={tick.y}
-                />
+                <span key={tick.value} className={`${styles.tick} tnum`} style={{ top: tick.y }}>
+                  {tick.value}
+                </span>
               ))}
-            </svg>
-            {layout.columns.map((column) => (
-              <div key={column.month} className={styles.column} data-column={column.month}>
-                <div className={styles.stack} style={{ height: column.height }}>
-                  <svg
-                    className={styles.stackSvg}
-                    height={column.height}
-                    aria-hidden="true"
-                    focusable="false"
-                  >
-                    {column.segments.map((segment, index) => (
-                      <rect
-                        key={segment.seriesId}
-                        x="0"
-                        y={segment.y - column.top}
-                        width="100%"
-                        height={segment.height}
-                        style={{ fill: colorOf(index) }}
-                        data-series={segment.seriesId}
-                        data-value={segment.value}
-                      />
-                    ))}
-                  </svg>
+            </div>
+            <div className={styles.plot} style={{ height }}>
+              <svg className={styles.grid} aria-hidden="true" focusable="false">
+                {layout.ticks.map((tick) => (
+                  <line
+                    key={tick.value}
+                    className={styles.gridLine}
+                    x1="0"
+                    x2="100%"
+                    y1={tick.y}
+                    y2={tick.y}
+                  />
+                ))}
+              </svg>
+              {layout.columns.map((column) => (
+                <div key={column.month} className={styles.column} data-column={column.month}>
+                  <div className={styles.stack} style={{ height: column.height }}>
+                    <svg
+                      className={styles.stackSvg}
+                      height={column.height}
+                      aria-hidden="true"
+                      focusable="false"
+                    >
+                      {column.segments.map((segment, index) => (
+                        <rect
+                          key={segment.seriesId}
+                          x="0"
+                          y={segment.y - column.top}
+                          width="100%"
+                          height={segment.height}
+                          style={{ fill: colorOf(index) }}
+                          data-series={segment.seriesId}
+                          data-value={segment.value}
+                        />
+                      ))}
+                    </svg>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-          <div className={styles.xAxis}>
-            {monthLabels.map((text, index) => (
-              <span key={months[index]} className={styles.xLabel}>
-                {text}
-              </span>
-            ))}
+              ))}
+            </div>
+            <div className={styles.xAxis}>
+              {monthLabels.map((text, index) => (
+                <span key={months[index]} className={styles.xLabel}>
+                  {text}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </div>

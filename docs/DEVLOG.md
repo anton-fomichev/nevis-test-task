@@ -283,3 +283,35 @@ card. `App` now renders the dashboard; the fixture-backed preview is gone. Test 
 "Loading the clients report…"; `/?fail=1` shows the alert with "The API answered 500: Simulated
 failure requested with ?fail=1." and a Retry button; clicking Retry renders the treegrid and the
 alert disappears.
+
+## Step 9 — Responsive pass (03:35 elapsed)
+
+**Did:** Checked 375, 768 and 1440 in the built-in browser (emulated viewports) and captured
+screenshots with headless Chrome driven by `playwright-core` from a scratch folder (not a project
+dependency): `docs/screenshots/desktop-1440.png`, `expanded-channels-1440.png`,
+`keyboard-focus-1440.png`, `mobile-375.png`, `loading-state.png`, `error-state.png`, all at 2×.
+
+**Questions that came up:**
+
+- At 375 the legend was centred on the chart's 763px _scroll_ width, so it sat half out of view.
+- My first measurements at 375 looked wrong (name column 63px, not sticky) — I had queried the
+  first `<table>` on the page, which is the chart's visually-hidden data table. Re-measured against
+  `[role="treegrid"]`.
+- The keyboard-focus screenshot showed the row outline cut off on the left: the sticky name cell
+  (opaque, `z-index: 1`) paints above the row box and covered the outline.
+
+**Decided:**
+
+- Only the drawing scrolls: the legend moved out of the chart's scroller and stays centred in the
+  card. The `<figure>` wraps scroller + legend + hidden table.
+- The focus ring is drawn with inset `box-shadow`s on the cells (first/last cells add the side
+  edges) instead of an outline on the `<tr>`, so it is complete on every row, sticky column
+  included. Decision #42.
+- No `ResizeObserver`/JS for responsiveness: pure CSS (`overflow-x: auto` scrollers, 180px sticky
+  name column ≤ 768px, 720px minimum plot width).
+
+**Verified by:** In the browser — 375: `document.documentElement.scrollWidth === 375`, chart
+scroller 311/763 (client/scroll), table scroller 343/1140, name cell 180px and `position: sticky`,
+legend centred within the card and fully in view. 768: scrollWidth 768, chart 704/763, table
+736/1140, name 180. 1440: table 1376 wide with 92px month columns, no scrollers active.
+`npm test -w apps/web` (67 passed), lint + typecheck green.
