@@ -1,0 +1,17 @@
+.chartCard {
+  padding: var(--space-6) var(--space-4) var(--space-4);
+}
+
+.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chartPlaceholder {
+  min-height: 432px; /* 24 + 8 + 320 + 12 + 16 + 16 + 16 + 16: the chart card's resting height */
+}
+
+.tablePlaceholder {
+  min-height: 280px; /* header + four rows */
+}

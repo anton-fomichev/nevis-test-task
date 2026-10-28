@@ -249,3 +249,37 @@ hidden table contents, legend items, palette extension. Chart added to the tempo
 stack 280px (= 350/400 × 320), `border-radius: 4px`, first segment `rgb(178, 157, 248)`
 (`--series-1`), grid stroke `rgba(20, 20, 19, 0.08)`, x labels 12px below the plot, legend 16px
 below the labels; "400" fully visible after the fix.
+
+## Step 8 — Dashboard (03:05 elapsed)
+
+**Did:** `features/clients/api/`: `devFlagsFrom(search)` (forwards only `delay`/`fail` from the
+page URL), `fetchClientsReport()` (network / non-2xx / non-JSON / contract mismatch → one
+`ClientsReportError` with a sentence a user can read, server `message` surfaced when present),
+`useClientsReport()` (TanStack Query, abort signal, `retry()`). `shared/ui`: `Spinner` (status
+region when labelled, decorative otherwise), `ErrorState` (`role="alert"`, title, message, Retry).
+`ClientsDashboard`: pending → two `aria-busy` card placeholders sized like the real cards (no
+layout jump) with one announced spinner; error → message + Retry; success → chart card + table
+card. `App` now renders the dashboard; the fixture-backed preview is gone. Test helpers
+(`renderWithQuery`, `mockFetch`) and 8 dashboard tests with a mocked `fetch`.
+
+**Questions that came up:**
+
+- Error tests timed out: the hook's own `retry: 1` overrode the test QueryClient's `retry: false`.
+- With `?fail=1` in the address bar, Retry re-sends the flag and fails again, so the "recovers via
+  Retry" box in the definition of done could not be ticked in a browser.
+- Where should the chart card's 24/16/16 padding live: on `Card` (a prop) or at the call site?
+
+**Decided:**
+
+- Retry policy belongs to the app's QueryClient (`retry: 1`), not the hook — tests set their own
+  client, and no component carries hidden timing. Decision #41.
+- `retry()` drops the forwarded dev flags and refetches, because the flags simulate a bad server
+  and "try again" should show the recovery, not replay the simulation; the test asserts the two
+  request URLs. Decision #40.
+- Card padding at the call site via a CSS-module class; `Card` stays a dumb surface.
+
+**Verified by:** `npm test -w apps/web` (67 passed), lint + typecheck green; in the browser:
+`/` renders chart + table; `/?delay=4000` shows two busy placeholders with the status text
+"Loading the clients report…"; `/?fail=1` shows the alert with "The API answered 500: Simulated
+failure requested with ?fail=1." and a Retry button; clicking Retry renders the treegrid and the
+alert disappears.
